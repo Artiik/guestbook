@@ -45,4 +45,4 @@ packages/*
 .vagrant
 .vagrant/*
 
-.env
+.env/database.local.db
