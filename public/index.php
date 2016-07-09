@@ -15,6 +15,15 @@ $database = new medoo([
     'database_file' => '../storage/database.db'
 ]);
 
+$comment = new SitePoint\Comment($database);
+$comment->setEmail('bruno@skvork.me')
+        ->setName('Bruno Skvork')
+        ->setComment('It works! Now it simply works so far)')
+        ->setComment('Hooray! Lets go and listen to music)')
+        ->save();
+
+dump($database->error());
+
 //dump($database);
 
 ?>
