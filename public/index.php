@@ -2,6 +2,8 @@
 
 require_once '../vendor/autoload.php';
 
+use Particle\Validator\Validator;
+
 //echo 'Hello';
 //
 //$arr = [1, 'apple', 2, true, 'foo', 'bar'];
@@ -22,13 +24,44 @@ $database = new medoo([
 ]);
 
 $comment = new SitePoint\Comment($database);
-$comment->setEmail('bruno@skvork.me')
-        ->setName('Bruno Skvork')
-        ->setComment('It works! Now it simply works so far)')
-        ->setComment('Hooray! Lets go and listen to music)')
-        ->save();
 
-dump($database->error());
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    $v = new Validator();
+    $v->required('name')->lengthBetween(1, 100)->alnum(true);
+    $v->required('email')->email()->lengthBetween(5, 255);
+    $v->required('comment')->lengthBetween(10, null);
+
+    $result = $v->validate($_POST);
+
+    if ($result->isValid()) {
+        try {
+            $comment
+                ->setName($_POST['name'])
+                ->setEmail($_POST['email'])
+                ->setComment($_POST['comment'])
+                ->save();
+
+            header('Location: /');
+            return;
+        } catch (\Exception $e) {
+            die($e->getMessage());
+        }
+    } else {
+        echo 'Bad submission';
+        dump($result->getMessages());
+    }
+
+//    dump($_POST);
+    //    echo 'Form submitted!';
+}
+
+//$comment->setEmail('bruno@skvork.me')
+//        ->setName('Bruno Skvork')
+//        ->setComment('It works! Now it simply works so far)')
+//        ->setComment('Hooray! Lets go and listen to music)')
+//        ->save();
+//
+//dump($database->error());
 
 //dump($database);
 
@@ -48,6 +81,7 @@ dump($database->error());
 
         <link rel="stylesheet" href="css/normalize.css">
         <link rel="stylesheet" href="css/main.css">
+        <link rel="stylesheet" href="css/custom.css">
         <script src="js/vendor/modernizr-2.8.3.min.js"></script>
     </head>
     <body>
@@ -56,6 +90,15 @@ dump($database->error());
         <![endif]-->
 
         <!-- Add your site or application content here -->
+        <?php foreach ($comment->findAll() as $comment) : ?>
+            <div class="comment">
+                <h3>On <?= $comment->getSubmissionDate() ?>, <?= $comment->getName() ?>
+                    wrote:
+                </h3>
+                <p><?= $comment->getComment() ?></p>
+            </div>
+        <?php endforeach; ?>
+
         <form action="" method="post">
             <label for="">Name: <input type="text" name="name"></label>
             <label for="">Email: <input type="text" name="email"></label>
